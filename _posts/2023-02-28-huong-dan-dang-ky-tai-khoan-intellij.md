@@ -2,9 +2,9 @@
 layout: post
 title: Hướng dẫn tải và đăng ký tài khoảng Intellij
 subtitle: Hướng dẫn tải và đăng ký tài khoảng Intellij
-cover-img: /assets/img/chay-project-java-4/inteliji.png
-thumbnail-img: /assets/img/chay-project-java-4/inteliji.png
-share-img: /assets/img/chay-project-java-4/inteliji.png
+cover-img: https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcS1tGA-54kjVzJWh9nMccyZL2B3NntTrJr30ZZWviyUI-4keFU4
+thumbnail-img: https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcS1tGA-54kjVzJWh9nMccyZL2B3NntTrJr30ZZWviyUI-4keFU4
+share-img: https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcS1tGA-54kjVzJWh9nMccyZL2B3NntTrJr30ZZWviyUI-4keFU4
 tags: [Hướng dẫn tải và đăng ký tài khoảng Intellij]
 ---
 
