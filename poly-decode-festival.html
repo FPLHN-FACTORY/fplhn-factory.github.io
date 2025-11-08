@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Poly Decode Festival - Ranking Board</title>
+  <style>
+    /* ===== Base Page Style ===== */
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    header {
+      text-align: center;
+      padding: 40px 20px 20px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 2.5rem;
+      color: #ff6600;
+    }
+
+    header h2 {
+      margin: 8px 0 0;
+      font-weight: normal;
+      color: #444;
+      font-size: 1.1rem;
+    }
+
+    /* ===== Table Styles ===== */
+    table {
+      border-collapse: collapse;
+      width: 90%;
+      max-width: 800px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      margin-bottom: 60px;
+    }
+
+    thead {
+      background-color: #ff6600;
+      color: white;
+    }
+
+    th, td {
+      padding: 14px 16px;
+      text-align: left;
+    }
+
+    th {
+      text-transform: uppercase;
+      font-size: 0.9rem;
+      letter-spacing: 1px;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid #f0f0f0;
+      transition: background 0.2s;
+    }
+
+    tbody tr:hover {
+      background-color: #f9f9f9;
+    }
+
+    /* ===== Rank Highlight Styles ===== */
+    .top-150 {
+      background: linear-gradient(90deg, #fff8e1, #fff3c4);
+      font-weight: 600;
+    }
+
+    .top-3:nth-child(1) td.rank {
+      color: #d4af37; /* gold */
+      font-weight: bold;
+    }
+    .top-3:nth-child(2) td.rank {
+      color: #c0c0c0; /* silver */
+      font-weight: bold;
+    }
+    .top-3:nth-child(3) td.rank {
+      color: #cd7f32; /* bronze */
+      font-weight: bold;
+    }
+
+    /* ===== Footer ===== */
+    footer {
+      margin-top: auto;
+      padding: 20px;
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    @media (max-width: 600px) {
+      th, td {
+        font-size: 0.85rem;
+        padding: 10px;
+      }
+      header h1 {
+        font-size: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Poly Decode Festival</h1>
+    <h2>Official Ranking Board - FPT Polytechnic</h2>
+  </header>
+
+  <table id="ranking-table">
+    <thead>
+      <tr>
+        <th>Rank</th>
+        <th>Email</th>
+        <th>Score</th>
+      </tr>
+    </thead>
+    <tbody id="ranking-body">
+      <tr><td colspan="3" style="text-align:center;">Loading data...</td></tr>
+    </tbody>
+  </table>
+
+  <footer>
+    © 2025 FPT Polytechnic • Poly Decode Festival
+  </footer>
+
+  <script>
+    // 🔗 Replace this URL with your actual CSV file link
+    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVAqK_FV8ipob5WKvg5-YRVsxZRsA0FAOUON2zn1UUQKZWXKXD8zwFsN2_lml5rgjAY1apsSPqogoB/pub?gid=904550547&single=true&output=csv';
+
+    async function fetchCSV(url) {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const text = await response.text();
+      return parseCSV(text);
+    }
+
+    function parseCSV(csvText) {
+      const lines = csvText.trim().split('\n');
+      const headers = lines.shift().split(',');
+      return lines.map(line => {
+        const [Email, Score] = line.split(',');
+        return { Email: Email.trim(), Score: parseFloat(Score.trim()) };
+      });
+    }
+
+    function displayRanking(data) {
+      const tbody = document.getElementById('ranking-body');
+      tbody.innerHTML = '';
+
+      // Sort by score (descending)
+      data.sort((a, b) => b.Score - a.Score);
+
+      data.forEach((row, index) => {
+        const tr = document.createElement('tr');
+
+        // Highlight top 150
+        if (index < 150) tr.classList.add('top-150');
+        if (index < 3) tr.classList.add('top-3');
+
+        tr.innerHTML = `
+          <td class="rank">${index + 1}</td>
+          <td>${row.Email}</td>
+          <td>${row.Score}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    fetchCSV(csvUrl)
+      .then(displayRanking)
+      .catch(err => {
+        document.getElementById('ranking-body').innerHTML = `
+          <tr><td colspan="3" style="color:red; text-align:center;">Error loading data: ${err.message}</td></tr>
+        `;
+      });
+  </script>
+</body>
+</html>
