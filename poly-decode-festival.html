@@ -19,7 +19,7 @@
 
     header {
       text-align: center;
-      padding: 40px 20px 20px;
+      padding: 40px 20px 10px;
     }
 
     header h1 {
@@ -35,6 +35,36 @@
       font-size: 1.1rem;
     }
 
+    /* ===== Tabs ===== */
+    .tabs {
+      display: flex;
+      justify-content: center;
+      margin: 20px 0;
+      gap: 10px;
+    }
+
+    .tab-button {
+      background: white;
+      border: 2px solid #ff6600;
+      color: #ff6600;
+      padding: 10px 20px;
+      border-radius: 25px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .tab-button.active {
+      background: #ff6600;
+      color: white;
+      box-shadow: 0 3px 10px rgba(255, 102, 0, 0.3);
+    }
+
+    .tab-button:hover {
+      background: #ff6600;
+      color: white;
+    }
+
     /* ===== Table Styles ===== */
     table {
       border-collapse: collapse;
@@ -45,6 +75,17 @@
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
       overflow: hidden;
       margin-bottom: 60px;
+      display: none;
+    }
+
+    table.active {
+      display: table;
+      animation: fadeIn 0.4s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     thead {
@@ -73,23 +114,14 @@
     }
 
     /* ===== Rank Highlight Styles ===== */
-    .top-150 {
+    .top-n {
       background: linear-gradient(90deg, #fff8e1, #fff3c4);
       font-weight: 600;
     }
 
-    .top-3:nth-child(1) td.rank {
-      color: #d4af37; /* gold */
-      font-weight: bold;
-    }
-    .top-3:nth-child(2) td.rank {
-      color: #c0c0c0; /* silver */
-      font-weight: bold;
-    }
-    .top-3:nth-child(3) td.rank {
-      color: #cd7f32; /* bronze */
-      font-weight: bold;
-    }
+    .top-3:nth-child(1) td.rank { color: #d4af37; font-weight: bold; }
+    .top-3:nth-child(2) td.rank { color: #c0c0c0; font-weight: bold; }
+    .top-3:nth-child(3) td.rank { color: #cd7f32; font-weight: bold; }
 
     /* ===== Footer ===== */
     footer {
@@ -100,13 +132,8 @@
     }
 
     @media (max-width: 600px) {
-      th, td {
-        font-size: 0.85rem;
-        padding: 10px;
-      }
-      header h1 {
-        font-size: 2rem;
-      }
+      th, td { font-size: 0.85rem; padding: 10px; }
+      header h1 { font-size: 2rem; }
     }
   </style>
 </head>
@@ -116,7 +143,13 @@
     <h2>Official Ranking Board - FPT Polytechnic</h2>
   </header>
 
-  <table id="ranking-table">
+  <div class="tabs">
+    <button class="tab-button active" data-target="individual-table">Individual</button>
+    <button class="tab-button" data-target="team-table">Team</button>
+  </div>
+
+  <!-- Individual Ranking Table -->
+  <table id="individual-table" class="active">
     <thead>
       <tr>
         <th>Rank</th>
@@ -124,7 +157,22 @@
         <th>Score</th>
       </tr>
     </thead>
-    <tbody id="ranking-body">
+    <tbody id="individual-body">
+      <tr><td colspan="3" style="text-align:center;">Loading data...</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Team Ranking Table -->
+  <table id="team-table">
+    <thead>
+      <tr>
+        <th>Rank</th>
+        <th>Team Code</th>
+        <th>Score</th>
+        <th>Members</th>
+      </tr>
+    </thead>
+    <tbody id="team-body">
       <tr><td colspan="3" style="text-align:center;">Loading data...</td></tr>
     </tbody>
   </table>
@@ -134,55 +182,104 @@
   </footer>
 
   <script>
-    // 🔗 Replace this URL with your actual CSV file link
-    const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVAqK_FV8ipob5WKvg5-YRVsxZRsA0FAOUON2zn1UUQKZWXKXD8zwFsN2_lml5rgjAY1apsSPqogoB/pub?gid=904550547&single=true&output=csv';
+    // CSV URLs
+    const urls = {
+      individual: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVAqK_FV8ipob5WKvg5-YRVsxZRsA0FAOUON2zn1UUQKZWXKXD8zwFsN2_lml5rgjAY1apsSPqogoB/pub?gid=904550547&single=true&output=csv',
+      team: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQMvwwimz2ARrjCWPTrpp0N4YgKJclYCG1xYBv0-YvN8seMZwSwce0C7InF2pPLqMYSO3P6kLT48cah/pub?gid=1017755022&single=true&output=csv'
+    };
 
-    async function fetchCSV(url) {
+    // Fetch and parse CSV
+    async function fetchCSVIndividual(url) {
       const response = await fetch(url);
       if (!response.ok) throw new Error('Network response was not ok');
       const text = await response.text();
-      return parseCSV(text);
+      return parseCSVIndividual(text);
+    }
+    
+    async function fetchCSVTeam(url) {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Network response was not ok');
+      const text = await response.text();
+      return parseCSVTeam(text);
     }
 
-    function parseCSV(csvText) {
+    function parseCSVIndividual(csvText) {
       const lines = csvText.trim().split('\n');
-      const headers = lines.shift().split(',');
+      lines.shift(); // remove header
       return lines.map(line => {
-        const [Email, Score] = line.split(',');
-        return { Email: Email.trim(), Score: parseFloat(Score.trim()) };
+        const parts = line.split(',');
+        return { Name: parts[0].trim(), Score: parseFloat(parts[1].trim()) };
+      });
+    }
+    
+    function parseCSVTeam(csvText) {
+      const lines = csvText.trim().split('\n');
+      lines.shift(); // remove header
+      return lines.map(line => {
+        const parts = line.split(',');
+        return { Name: parts[0].trim(), Score: parseFloat(parts[1].trim()), Members: parts[3] };
       });
     }
 
-    function displayRanking(data) {
-      const tbody = document.getElementById('ranking-body');
+    function displayRankingIndividual(data) {
+      const tbody = document.getElementById('individual-body');
       tbody.innerHTML = '';
 
-      // Sort by score (descending)
       data.sort((a, b) => b.Score - a.Score);
 
       data.forEach((row, index) => {
         const tr = document.createElement('tr');
-
-        // Highlight top 150
-        if (index < 150) tr.classList.add('top-150');
+        if (index < 150) tr.classList.add('top-n');
         if (index < 3) tr.classList.add('top-3');
-
         tr.innerHTML = `
           <td class="rank">${index + 1}</td>
-          <td>${row.Email}</td>
+          <td>${row.Name}</td>
           <td>${row.Score}</td>
         `;
         tbody.appendChild(tr);
       });
     }
+    
+    function displayRankingTeam(data) {
+      const tbody = document.getElementById('team-body');
+      tbody.innerHTML = '';
 
-    fetchCSV(csvUrl)
-      .then(displayRanking)
-      .catch(err => {
-        document.getElementById('ranking-body').innerHTML = `
-          <tr><td colspan="3" style="color:red; text-align:center;">Error loading data: ${err.message}</td></tr>
+      data.sort((a, b) => b.Score - a.Score);
+
+      data.forEach((row, index) => {
+        const tr = document.createElement('tr');
+        if (index < 10) tr.classList.add('top-n');
+        if (index < 3) tr.classList.add('top-3');
+        tr.innerHTML = `
+          <td class="rank">${index + 1}</td>
+          <td>${row.Name}</td>
+          <td>${row.Score}</td>
+          <td>${row.Members}</td>
         `;
+        tbody.appendChild(tr);
       });
+    }
+
+    // Initialize both rankings
+    fetchCSVIndividual(urls.individual)
+      .then(data => displayRankingIndividual(data))
+      .catch(err => document.getElementById('individual-body').innerHTML = `<tr><td colspan="3" style="color:red; text-align:center;">Error: ${err.message}</td></tr>`);
+
+    fetchCSVTeam(urls.team)
+      .then(data => displayRankingTeam(data))
+      .catch(err => document.getElementById('team-body').innerHTML = `<tr><td colspan="3" style="color:red; text-align:center;">Error: ${err.message}</td></tr>`);
+
+    // Tab Switching Logic
+    const tabs = document.querySelectorAll('.tab-button');
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        document.querySelectorAll('table').forEach(table => table.classList.remove('active'));
+        document.getElementById(tab.dataset.target).classList.add('active');
+      });
+    });
   </script>
 </body>
 </html>
